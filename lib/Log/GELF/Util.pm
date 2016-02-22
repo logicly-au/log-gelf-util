@@ -293,7 +293,7 @@ sub parse_level {
     my $level = shift @p;
 
     if ( $level =~ $LEVEL_NAME_REGEX ) {
-        return %LEVEL_NAME_TO_NUMBER{$1};
+        return $LEVEL_NAME_TO_NUMBER{$1};
     }
     elsif ( $level =~ /^(?:0|1|2|3|4|5|6|7)$/ ) {
         return $level;
