@@ -5,34 +5,34 @@ use IO::Uncompress::Gunzip qw(gunzip $GunzipError);
 use IO::Uncompress::Inflate qw(inflate $InflateError) ;
 use JSON::MaybeXS qw(decode_json);
 
-use Log::GELF::Util;
+use Log::GELF::Util qw(encode compress uncompress);
 
 throws_ok{
-    my %msg = Log::GELF::Util::compress();
+    my %msg = compress();
 }
 qr/0 parameters were passed.*/,
 'mandatory parameter missing';
 
 throws_ok{
-    Log::GELF::Util::compress({});
+    compress({});
 }
 qr/Parameter #1.*/,
 'message parameters wrong type';
 
 throws_ok{
-    my %msg = Log::GELF::Util::compress(1,'wrong');
+    my %msg = compress(1,'wrong');
 }
 qr/Parameter #2.*/,
 'type parameters wrong';
 
 throws_ok{
-    my %msg = Log::GELF::Util::uncompress();
+    my %msg = uncompress();
 }
 qr/0 parameters were passed.*/,
 'mandatory parameter missing';
 
 throws_ok{
-    my %msg = Log::GELF::Util::uncompress(
+    my %msg = uncompress(
        {},
     );
 }
@@ -40,19 +40,19 @@ qr/Parameter #1.*/,
 'message parameters wrong type';
 
 lives_ok{
-    Log::GELF::Util::compress( 1, 'gzip');
+    compress( 1, 'gzip');
 }
 'gzips explicit ok';
 
 lives_ok{
-    Log::GELF::Util::compress( 1, 'zlib');
+    compress( 1, 'zlib');
 }
 'zlib explicit ok';
 
 my $msgz;
 lives_ok{
-    $msgz = Log::GELF::Util::compress(
-        Log::GELF::Util::encode(
+    $msgz = compress(
+        encode(
             {
                 host           => 'host',
                 short_message  => 'message',
@@ -72,7 +72,7 @@ is($msg->{host},    'host', 'correct default version');
 
 lives_ok{
     $msg = decode_json(
-        Log::GELF::Util::uncompress($msgz)
+        uncompress($msgz)
     );
 }
 'uncompresses gzip ok';
@@ -82,8 +82,8 @@ is($msg->{host},    'host', 'correct default version');
 
 my $msgz;
 lives_ok{
-    $msgz = Log::GELF::Util::compress(
-     Log::GELF::Util::encode(
+    $msgz = compress(
+     encode(
             {
                 host           => 'host',
                 short_message  => 'message',
@@ -104,7 +104,7 @@ is($msg->{host},    'host', 'correct default version');
 
 lives_ok{
     $msg = decode_json(
-        Log::GELF::Util::uncompress($msgz)
+        uncompress($msgz)
     );
 }
 'uncompresses zlib ok';

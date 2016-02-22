@@ -4,7 +4,14 @@ use warnings;
 use Test::More;
 use Test::Exception;
 
-use Log::GELF::Util;
+use Log::GELF::Util qw(
+    decode_chunk
+    compress
+    uncompress
+    is_chunked
+    enchunk
+    encode
+);
 
 use JSON::MaybeXS qw(decode_json);
 use IO::Uncompress::Gunzip qw(gunzip $GunzipError);
@@ -19,7 +26,7 @@ sub test_dechunk {
 
     foreach my $chunk (@_) {
 
-        my $chunk = Log::GELF::Util::decode_chunk( $chunk );
+        my $chunk = decode_chunk( $chunk );
 
         die "sequence_number > sequence count - should not happen"
             if $chunk->{sequence_number} > $chunk->{sequence_count};
@@ -32,29 +39,29 @@ sub test_dechunk {
         $msg .= $chunk->{data};
     }
     
-    return Log::GELF::Util::uncompress( $msg );
+    return uncompress( $msg );
 };
 
 throws_ok{
-    my %msg = Log::GELF::Util::is_chunked();
+    my %msg = is_chunked();
 }
 qr/0 parameters were passed.*/,
 'mandatory parameters missing';
 
-ok( ! Log::GELF::Util::is_chunked( 'no magic' ), 'no magic' );
+ok( ! is_chunked( 'no magic' ), 'no magic' );
 
-ok( Log::GELF::Util::is_chunked( $GELF_MSG_MAGIC ), 'magic' );
+ok( is_chunked( $GELF_MSG_MAGIC ), 'magic' );
 
 throws_ok{
-    my %msg = Log::GELF::Util::enchunk();
+    my %msg = enchunk();
 }
 qr/0 parameters were passed.*/,
 'mandatory parameters missing';
 
 my @chunks;
 lives_ok{
-    @chunks = Log::GELF::Util::enchunk(
-        Log::GELF::Util::encode(
+    @chunks = enchunk(
+        encode(
             {
                 host           => 'host',
                 short_message  => 'message',
@@ -66,14 +73,14 @@ lives_ok{
 'enchunks ok';
 
 throws_ok{
-    Log::GELF::Util::decode_chunk();
+    decode_chunk();
 }
 qr/0 parameters were passed.*/,
 'mandatory parameter to decode_chunk missing';
 
 my $chunk;
 lives_ok{
-    $chunk = Log::GELF::Util::decode_chunk($chunks[0]);
+    $chunk = decode_chunk($chunks[0]);
 }
 'decode chunk succeeds';
 
@@ -87,9 +94,9 @@ is($msg->{version}, '1.1',  'correct default version');
 is($msg->{host},    'host', 'correct default version');
 
 lives_ok{
-    @chunks = Log::GELF::Util::enchunk(
-        Log::GELF::Util::compress(
-            Log::GELF::Util::encode(
+    @chunks = enchunk(
+        compress(
+            encode(
                 {
                     host           => 'host',
                     short_message  => 'message',
@@ -106,9 +113,9 @@ is($msg->{version}, '1.1',  'correct default version');
 is($msg->{host},    'host', 'correct default version');
 
 lives_ok{
-    @chunks = Log::GELF::Util::enchunk(
-        Log::GELF::Util::compress(
-            Log::GELF::Util::encode(
+    @chunks = enchunk(
+        compress(
+            encode(
                 {
                     host           => 'host',
                     short_message  => 'message',

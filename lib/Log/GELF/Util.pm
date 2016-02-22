@@ -3,7 +3,22 @@ use 5.010;
 use strict;
 use warnings;
 
-our $VERSION = "0.01";
+require Exporter;
+
+our (
+    $VERSION,
+    @ISA,
+    @EXPORT_OK, 
+    %EXPORT_TAGS,
+    $GELF_MSG_MAGIC,
+    $ZLIB_MAGIC,
+    $GZIP_MAGIC,
+    %LEVEL_NAME_TO_NUMBER,
+    %GELF_MESSAGE_FIELDS,
+    $LEVEL_NAME_REGEX,
+);
+
+$VERSION = "0.01";
 
 use Params::Validate qw(validate validate_pos validate_with SCALAR ARRAYREF HASHREF);
 use Time::HiRes qw(time);
@@ -15,11 +30,11 @@ use IO::Compress::Deflate qw(deflate $DeflateError);
 use IO::Uncompress::Inflate qw(inflate $InflateError);
 use Math::Random::MT qw(irand);
 
-our $GELF_MSG_MAGIC     = pack('C*', 0x1e, 0x0f);
-our $ZLIB_MAGIC         = pack('C*', 0x78, 0x9c);
-our $GZIP_MAGIC         = pack('C*', 0x1f, 0x8b);
+$GELF_MSG_MAGIC     = pack('C*', 0x1e, 0x0f);
+$ZLIB_MAGIC         = pack('C*', 0x78, 0x9c);
+$GZIP_MAGIC         = pack('C*', 0x1f, 0x8b);
 
-our %LEVEL_NAME_TO_NUMBER  = (
+%LEVEL_NAME_TO_NUMBER  = (
     emerg  => LOG_EMERG,
     alert  => LOG_ALERT,
     crit   => LOG_CRIT,
@@ -30,7 +45,7 @@ our %LEVEL_NAME_TO_NUMBER  = (
     debug  => LOG_DEBUG,
 );
 
-our %GELF_MESSAGE_FIELDS = (
+%GELF_MESSAGE_FIELDS = (
     version        => 1,
     host           => 1,
     short_message  => 1,
@@ -45,7 +60,28 @@ my $ln = '^(' .
     (join '|', (keys %LEVEL_NAME_TO_NUMBER)) .
     ')\w*$';
 
-our $LEVEL_NAME_REGEX = qr/$ln/i;
+$LEVEL_NAME_REGEX = qr/$ln/i;
+
+@ISA       = qw(Exporter);
+@EXPORT_OK = qw( 
+    $GELF_MSG_MAGIC
+    $ZLIB_MAGIC
+    $GZIP_MAGIC
+    %LEVEL_NAME_TO_NUMBER
+    %GELF_MESSAGE_FIELDS
+    validate_message
+    encode
+    compress
+    uncompress
+    enchunk
+    is_chunked
+    decode_chunk
+    parse_level
+    parse_size
+);
+
+push @{ $EXPORT_TAGS{all} }, @EXPORT_OK ;
+Exporter::export_ok_tags('all');
 
 sub validate_message {
     my %p = validate_with(

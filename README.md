@@ -19,4 +19,4 @@ it under the same terms as Perl itself.
 
 # AUTHOR
 
-Adam Clarke <adam.clarke@strategicdata.com.au>
+Adam Clarke &lt;adam.clarke@strategicdata.com.au>
