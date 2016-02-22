@@ -1,7 +1,6 @@
 use strict;
 use Test::More 0.98;
 use Test::Exception;
-use Test::Warnings 0.005 qw(warning);
 
 use Log::GELF::Util;
 
