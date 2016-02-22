@@ -33,7 +33,7 @@ use Params::Validate qw(
 );
 use Time::HiRes qw(time);
 use Sys::Syslog qw(:macros);
-use JSON::MaybeXS qw(encode_json);
+use JSON::MaybeXS qw(encode_json decode_json);
 use IO::Compress::Gzip qw(gzip $GzipError);
 use IO::Uncompress::Gunzip qw(gunzip $GunzipError);
 use IO::Compress::Deflate qw(deflate $DeflateError);
@@ -93,6 +93,7 @@ undef $ln;
     %GELF_MESSAGE_FIELDS
     validate_message
     encode
+    decode
     compress
     uncompress
     enchunk
@@ -144,7 +145,7 @@ sub validate_message {
         }
     }
     
-    return %p;
+    return \%p;
 }
 
 sub encode {
@@ -153,7 +154,18 @@ sub encode {
         { type => HASHREF },
     );
 
-    return encode_json({validate_message(@p)});
+    return encode_json(validate_message(@p));
+}
+
+sub decode {
+    my @p = validate_pos(
+        @_,
+        { type => SCALAR },
+    );
+
+    my $msg = shift @p;
+
+    return validate_message(decode_json($msg));
 }
 
 sub compress {
