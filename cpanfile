@@ -1,5 +1,6 @@
 requires 'perl', '5.008001';
 
+requires 'Readonly';
 requires 'Params::Validate';
 requires 'Time::HiRes';
 requires 'JSON::MaybeXS';

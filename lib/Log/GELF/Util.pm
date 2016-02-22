@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 require Exporter;
+use Readonly;
 
 our (
     $VERSION,
@@ -20,6 +21,7 @@ our (
 );
 
 $VERSION = "0.01";
+Readonly $VERSION;
 
 use Params::Validate qw(validate validate_pos validate_with SCALAR ARRAYREF HASHREF);
 use Time::HiRes qw(time);
@@ -31,11 +33,11 @@ use IO::Compress::Deflate qw(deflate $DeflateError);
 use IO::Uncompress::Inflate qw(inflate $InflateError);
 use Math::Random::MT qw(irand);
 
-$GELF_MSG_MAGIC = pack('C*', 0x1e, 0x0f);
-$ZLIB_MAGIC     = pack('C*', 0x78, 0x9c);
-$GZIP_MAGIC     = pack('C*', 0x1f, 0x8b);
+Readonly $GELF_MSG_MAGIC => pack('C*', 0x1e, 0x0f);
+Readonly $ZLIB_MAGIC     => pack('C*', 0x78, 0x9c);
+Readonly $GZIP_MAGIC     => pack('C*', 0x1f, 0x8b);
 
-%LEVEL_NAME_TO_NUMBER  = (
+Readonly %LEVEL_NAME_TO_NUMBER => (
     emerg  => LOG_EMERG,
     alert  => LOG_ALERT,
     crit   => LOG_CRIT,
@@ -46,7 +48,7 @@ $GZIP_MAGIC     = pack('C*', 0x1f, 0x8b);
     debug  => LOG_DEBUG,
 );
 
-%LEVEL_NUMBER_TO_NAME  = (
+Readonly %LEVEL_NUMBER_TO_NAME => (
     LOG_EMERG   =>  'emerg',
     LOG_ALERT   =>  'alert',
     LOG_CRIT    =>  'crit',
@@ -57,7 +59,7 @@ $GZIP_MAGIC     = pack('C*', 0x1f, 0x8b);
     LOG_DEBUG   =>  'debug',
 );
 
-%GELF_MESSAGE_FIELDS = (
+Readonly %GELF_MESSAGE_FIELDS => (
     version        => 1,
     host           => 1,
     short_message  => 1,
@@ -71,8 +73,8 @@ $GZIP_MAGIC     = pack('C*', 0x1f, 0x8b);
 my $ln = '^(' .
     (join '|', (keys %LEVEL_NAME_TO_NUMBER)) .
     ')\w*$';
-
 $LEVEL_NAME_REGEX = qr/$ln/i;
+undef $ln;
 
 @ISA       = qw(Exporter);
 @EXPORT_OK = qw( 
