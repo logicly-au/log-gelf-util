@@ -11,13 +11,12 @@ use Log::GELF::Util qw(
     is_chunked
     enchunk
     encode
+    $GELF_MSG_MAGIC
 );
 
 use JSON::MaybeXS qw(decode_json);
 use IO::Uncompress::Gunzip qw(gunzip $GunzipError);
 use IO::Uncompress::Inflate qw(inflate $InflateError);
-
-my $GELF_MSG_MAGIC     = pack('C*', 0x1e, 0x0f);
 
 sub test_dechunk {
     

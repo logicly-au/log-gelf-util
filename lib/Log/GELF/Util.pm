@@ -14,6 +14,7 @@ our (
     $ZLIB_MAGIC,
     $GZIP_MAGIC,
     %LEVEL_NAME_TO_NUMBER,
+    %LEVEL_NUMBER_TO_NAME,
     %GELF_MESSAGE_FIELDS,
     $LEVEL_NAME_REGEX,
 );
@@ -30,9 +31,9 @@ use IO::Compress::Deflate qw(deflate $DeflateError);
 use IO::Uncompress::Inflate qw(inflate $InflateError);
 use Math::Random::MT qw(irand);
 
-$GELF_MSG_MAGIC     = pack('C*', 0x1e, 0x0f);
-$ZLIB_MAGIC         = pack('C*', 0x78, 0x9c);
-$GZIP_MAGIC         = pack('C*', 0x1f, 0x8b);
+$GELF_MSG_MAGIC = pack('C*', 0x1e, 0x0f);
+$ZLIB_MAGIC     = pack('C*', 0x78, 0x9c);
+$GZIP_MAGIC     = pack('C*', 0x1f, 0x8b);
 
 %LEVEL_NAME_TO_NUMBER  = (
     emerg  => LOG_EMERG,
@@ -43,6 +44,17 @@ $GZIP_MAGIC         = pack('C*', 0x1f, 0x8b);
     notice => LOG_NOTICE,
     info   => LOG_INFO,
     debug  => LOG_DEBUG,
+);
+
+%LEVEL_NUMBER_TO_NAME  = (
+    LOG_EMERG   =>  'emerg',
+    LOG_ALERT   =>  'alert',
+    LOG_CRIT    =>  'crit',
+    LOG_ERR     =>  'err',
+    LOG_WARNING =>  'warn',
+    LOG_NOTICE  =>  'notice',
+    LOG_INFO    =>  'info',
+    LOG_DEBUG   =>  'debug',
 );
 
 %GELF_MESSAGE_FIELDS = (
@@ -68,6 +80,7 @@ $LEVEL_NAME_REGEX = qr/$ln/i;
     $ZLIB_MAGIC
     $GZIP_MAGIC
     %LEVEL_NAME_TO_NUMBER
+    %LEVEL_NUMBER_TO_NAME
     %GELF_MESSAGE_FIELDS
     validate_message
     encode
@@ -278,7 +291,6 @@ sub parse_level {
     my $level = shift @p;
 
     if ( $level =~ $LEVEL_NAME_REGEX ) {
-        
         return %LEVEL_NAME_TO_NUMBER{$1};
     }
     elsif ( $level =~ /^(?:0|1|2|3|4|5|6|7)$/ ) {
