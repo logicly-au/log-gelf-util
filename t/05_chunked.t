@@ -77,7 +77,7 @@ lives_ok{
 }
 'decode chunk succeeds';
 
-ok($chunk->{id}, 'id exists');
+ok($chunk->{id},                              'id exists');
 is($chunk->{sequence_number}, 0,              'sequence correct');
 is($chunk->{sequence_count},  scalar @chunks, 'sequence correct');
 is(length($chunk->{data}),    4,              'chunk size correct');
