@@ -5,19 +5,19 @@ use warnings;
 
 our $VERSION = "0.01";
 
-use Params::Validate qw(validate SCALAR ARRAYREF HASHREF);
+use Params::Validate qw(validate validate_pos validate_with SCALAR ARRAYREF HASHREF);
 use Time::HiRes qw(time);
 use Sys::Syslog qw(:macros);
 use JSON::MaybeXS qw(encode_json);
 use IO::Compress::Gzip qw(gzip $GzipError);
+use IO::Uncompress::Gunzip qw(gunzip $GunzipError);
+use IO::Compress::Deflate qw(deflate $DeflateError);
+use IO::Uncompress::Inflate qw(inflate $InflateError);
 use Math::Random::MT qw(irand);
 
-our $GELF_MSG_MAGIC        = pack('C*', 0x1e, 0x0f);
-our @GELF_MSG_MAGIC_SPEC   = (0, 2);
-our @GELF_MSG_ID_SPEC      = (2, 8);
-our @GELF_MSG_SEQ_NO_SPEC  = (10,1);
-our @GELF_MSG_SEQ_CNT_SPEC = (11,1);
-our @GELF_MSG_SPEC         = (12);
+our $GELF_MSG_MAGIC     = pack('C*', 0x1e, 0x0f);
+our $ZLIB_MAGIC         = pack('C*', 0x78, 0x9c);
+our $GZIP_MAGIC         = pack('C*', 0x1f, 0x8b);
 
 our %LEVEL_NAME_TO_NUMBER  = (
     emerg  => LOG_EMERG,
@@ -30,17 +30,29 @@ our %LEVEL_NAME_TO_NUMBER  = (
     debug  => LOG_DEBUG,
 );
 
-my $ln = '$(' .
-    join '|', (keys %LEVEL_NAME_TO_NUMBER) .
+our %GELF_MESSAGE_FIELDS = (
+    version        => 1,
+    host           => 1,
+    short_message  => 1,
+    full_message   => 1,
+    timestamp      => 1,
+    level          => 1,
+    facility       => 1,
+    file           => 1,
+);
+
+my $ln = '^(' .
+    (join '|', (keys %LEVEL_NAME_TO_NUMBER)) .
     ')\w*$';
 
 our $LEVEL_NAME_REGEX = qr/$ln/i;
 
 sub validate_message {
-    my %p = validate(
-        @_,
-        {
-            version       => { regex => qr/^\d+$/ },
+    my %p = validate_with(
+        params      => \@_,
+        allow_extra => 1,
+        spec        => {
+            version       => { regex => qr/^1\.1$/, default => '1.1' },
             host          => { type  => SCALAR },
             short_message => { type  => SCALAR },
             full_message  => { type  => SCALAR, optional => 1 },
@@ -50,73 +62,118 @@ sub validate_message {
                 regex   => qr/^(?:0|1|2|3|4|5|6|7)$/,
             },
             facility      => {
+                optional  => 1,
                 regex     => qr/^\d+$/,
-                callbacks => {           # ... and smaller than 90
-                    deprecated => sub { warn "level is deprecated, send as additional field instead" },
+                callbacks => {
+                    deprecated => sub { warn "facility is deprecated, send as additional field instead" },
                 },
             },
             file          => {
+                optional  => 1,
                 type      => SCALAR,
                 callbacks => {
-                    deprecated => sub { warn "level is deprecated, send as additional field instead" },
+                    deprecated => sub { warn "file is deprecated, send as additional field instead" },
                 },
             },
         },
     );
+    
+    foreach my $key (keys %p ) {
+        if ( $key eq '_id' ||
+             ! ( exists $GELF_MESSAGE_FIELDS{$key} || $key =~ /^_/ )
+        ) {
+               die "invalid field '$key'";
+        }
+    }
+    
+    return %p;
 }
 
 sub encode {
-    my %p = validate(
+    my @p = validate_pos(
         @_,
-        {
-            message => {
-                type => HASHREF,
-                callbacks => {
-                    validate_message => \&validate_message,
-                },
-            },
-        },
+        { type => HASHREF },
     );
 
-    return encode_json($p{message});
+    return encode_json({validate_message(@p)});
 }
 
 sub compress {
-    my %p = validate(
+    my @p = validate_pos(
         @_,
-        {
-            message => { type => SCALAR },
-        },
+        { type  => SCALAR },
+        { regex => qr/^(?:zlib|gzip)$/, default => 'gzip' },
     );
+    
+    my ($message, $type) = @p;
+    
+    my $method = \&gzip;
+    my $error  = \$GzipError;
+    if ( $type eq 'zlib' ) {
+        $method = \&deflate;
+        $error  = \$DeflateError;
+    }
 
     my $msgz;
-    gzip \$p{message} => \$msgz
-      or die "gzip failed: $GzipError";
+    &{$method}(\$message => \$msgz)
+      or die "compress failed: ${$error}";
 
     return $msgz;
 }
 
-sub enchunk {
-    my %p = validate(
+sub uncompress {
+    my @p = validate_pos(
         @_,
-        {
-            size =>    { regex => qr/^\d+$/ },
-            message => { type => SCALAR },
-        },
+        { type => SCALAR }
     );
+    
+    my $message = shift @p;
+    
+    my $msg_magic = substr $message, 0, 2;
+    
+    my $method;
+    my $error;
+    if ($ZLIB_MAGIC eq $msg_magic) {
+        $method = \&inflate;
+        $error  = \$InflateError;
+    }
+    elsif ($GZIP_MAGIC eq $msg_magic) {
+        $method = \&gunzip;
+        $error  = \$GunzipError;
+    }
+    else {
+        #assume plain message
+        return $message;
+    }
 
-    if ( $p{size}
-         && length $p{message} > $p{size}
+    my $msg;
+    &{$method}(\$message => \$msg)
+      or die "uncompress failed: ${$error}";
+
+    return $msg;
+}
+
+sub enchunk {
+    my @p = validate_pos(
+        @_,
+        { type  => SCALAR },
+        { regex => qr/^\d+$/, default => parse_size('wan') },
+    );
+    
+    my ($message, $size) = @p;
+
+    if ( $size
+         && length $message > $size
     ) {
         my @chunks;
-        while (length $p{message}) {
-            push @chunks, substr $p{message}, 0, $p{size}, '';
+        while (length $message) {
+            push @chunks, substr $message, 0, $size, '';
         }
 
         my $n_chunks = scalar @chunks;
         die 'Message too big' if $n_chunks > 128;
 
-        my $magic          = pack('C*', 0x1e,0x0f); # Chunked GELF magic bytes
+        my $magic          = pack('C*', 0x1e,0x0f); # Chunked GELF magic
         my $message_id     = pack('L*', irand(),irand());
         my $sequence_count = pack('C*', $n_chunks);
 
@@ -134,37 +191,41 @@ sub enchunk {
         return @chunks_w_header;
     }
     else {
-         return ($p{message});
+         return ($message);
     }
 }
 
 sub is_chunked {
-    my %p = validate(
+    my @p = validate_pos(
         @_,
-        {
-            chunk => { type => SCALAR },
-        },
+        { type => SCALAR },
     );
-
-    return $GELF_MSG_MAGIC eq substr $p{chunk}, @GELF_MSG_MAGIC_SPEC;
+    
+    my $chunk = shift @p;
+    
+    return $GELF_MSG_MAGIC eq substr $chunk, 0, 2;
 }
 
 sub decode_chunk {
-    my %p = validate(
+    my @p = validate_pos(
         @_,
-        {
-            encoded_chunk => { type => SCALAR },
-        },
+        { type => SCALAR },
     );
+    
+    my $encoded_chunk = shift;
 
-    my $msg_magic   = substr $p{encoded_chunk}, @GELF_MSG_MAGIC_SPEC;
-
-    if ( $msg_magic eq $GELF_MSG_MAGIC ) {
+    if ( is_chunked($encoded_chunk) ) {
+        
+        my $id      = join '', unpack('LL', substr $encoded_chunk,  2, 8);
+        my $seq_no  = unpack('C',  substr $encoded_chunk, 10, 1);
+        my $seq_cnt = unpack('C',  substr $encoded_chunk, 11, 1);
+        my $data    = substr $encoded_chunk, 12;
+        
         return {
-            id              => unpack('LL', substr $p{encoded_chunk}, @GELF_MSG_ID_SPEC),
-            sequence_number => unpack('C',  substr $p{encoded_chunk}, @GELF_MSG_SEQ_NO_SPEC),
-            sequence_count  => unpack('C',  substr $p{encoded_chunk}, @GELF_MSG_SEQ_CNT_SPEC),
-            chunk           => substr $p{encoded_chunk}, @GELF_MSG_SPEC,
+            id              => $id,
+            sequence_number => $seq_no,
+            sequence_count  => $seq_cnt,
+            data            => $data,
         };
     }
     else {
@@ -173,18 +234,19 @@ sub decode_chunk {
 }
 
 sub parse_level {
-    my %p = validate(
+    my @p = validate_pos(
         @_,
-        {
-            level => { type => SCALAR },
-        }
+        { type => SCALAR }
     );
+    
+    my $level = shift @p;
 
-    if ( $p{level} =~ $LEVEL_NAME_REGEX ) {
+    if ( $level =~ $LEVEL_NAME_REGEX ) {
+        
         return %LEVEL_NAME_TO_NUMBER{$1};
     }
-    elsif ( $p{level} =~ /^(?:0|1|2|3|4|5|6|7)$/ ) {
-        return $p{level};
+    elsif ( $level =~ /^(?:0|1|2|3|4|5|6|7)$/ ) {
+        return $level;
     }
     else {
         die "invalid log level";
@@ -192,12 +254,12 @@ sub parse_level {
 }
 
 sub parse_size {
-    my %p = validate(
+    my @p = validate_pos(
         @_,
-        {
-            size => { regex => qr/^(lan|wan|\d+)$/i },
-        },
+        { regex => qr/^(lan|wan|\d+)$/i }
     );
+
+    my $size = shift @p;
 
     # These default values below were determined by
     # examining the code for Graylog's implementation. See
@@ -211,14 +273,14 @@ sub parse_size {
     # See http://stackoverflow.com/questions/14993000/the-most-reliable-and-efficient-udp-packet-size
     # For some discussion. I don't think this is an exact science!
 
-    if ( lc($1) eq 'wan' ) {
+    if ( lc($size) eq 'wan' ) {
         return 1420;
     }
-    elsif ( lc($1) eq 'lan' ) {
+    elsif ( lc($size) eq 'lan' ) {
         return 8152;
     }
     else {
-        return $1;
+        return $size;
     }
 }
 

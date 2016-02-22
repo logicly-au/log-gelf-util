@@ -5,5 +5,5 @@ use_ok $_ for qw(
     Log::GELF::Util
 );
 
-done_testing;
+done_testing(1);
 
