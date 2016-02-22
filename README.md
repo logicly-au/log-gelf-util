@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.org/strategicdata/log-gelf-util.svg?branch=master)](https://travis-ci.org/strategicdata/log-gelf-util)
 # NAME
 
 Log::GELF::Util - It's new $module
