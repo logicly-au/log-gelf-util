@@ -23,7 +23,14 @@ our (
 $VERSION = "0.01";
 Readonly $VERSION;
 
-use Params::Validate qw(validate validate_pos validate_with SCALAR ARRAYREF HASHREF);
+use Params::Validate qw(
+    validate
+    validate_pos
+    validate_with
+    SCALAR
+    ARRAYREF
+    HASHREF
+);
 use Time::HiRes qw(time);
 use Sys::Syslog qw(:macros);
 use JSON::MaybeXS qw(encode_json);
