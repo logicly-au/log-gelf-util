@@ -127,6 +127,7 @@ sub validate_message {
             timestamp     => { type => SCALAR, default  => time },
             level         => { type => SCALAR, default  => 1 },
             facility      => {
+                type      => SCALAR,
                 optional  => 1,
                 callbacks => {
                     facility_check => sub {
@@ -138,8 +139,8 @@ sub validate_message {
                 },
             },
             file          => {
-                optional  => 1,
                 type      => SCALAR,
+                optional  => 1,
                 callbacks => {
                     deprecated => sub { warn "file is deprecated, send as additional field instead" },
                 },
@@ -185,6 +186,7 @@ sub compress {
         @_,
         { type  => SCALAR },
         {
+            type    => SCALAR,
             default => 'gzip',
             callbacks => {
                 compress_type => sub {
@@ -349,6 +351,7 @@ sub parse_size {
     my @p = validate_pos(
         @_,
         {
+            type      => SCALAR,
             callbacks => {
                 compress_type => sub {
                     my $size = shift;
@@ -378,9 +381,6 @@ sub parse_size {
     }
     elsif ( $size eq 'lan' ) {
         $size = 8152;
-    }
-    elsif ( $size eq '0' ) {
-        $size = '0 but true';
     }
 
     return $size;

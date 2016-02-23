@@ -64,12 +64,17 @@ qr/chunk size must be "lan", "wan", a positve integer, or 0 \(no chunking\)/,
 'enchunk negative size';
 
 throws_ok{
-    enchunk('0123456789', 'x');
+    enchunk('0123456789', 'xxx');
 }
 qr/chunk size must be "lan", "wan", a positve integer, or 0 \(no chunking\)/,
 'enchunk bad size';
 
 my @chunks;
+lives_ok{
+    @chunks = enchunk('0123456789');
+}
+'enchunks ok - size default';
+
 lives_ok{
     @chunks = enchunk('0123456789', 0);
 }
@@ -155,5 +160,5 @@ $msg = decode_json(test_dechunk(@chunks));
 is($msg->{version}, '1.1',  'correct default version');
 is($msg->{host},    'host', 'correct default version');
 
-done_testing(25);
+done_testing(26);
 

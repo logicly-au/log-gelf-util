@@ -13,7 +13,7 @@ qr/0 parameters were passed.*/,
 throws_ok{
     my %msg = parse_size({});
 }
-qr/chunk size must be "lan", "wan", a positve integer, or 0 \(no chunking\)/,
+qr/Parameter #1.*/,
 'parse_size wrong type';
 
 throws_ok{
