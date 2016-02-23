@@ -13,19 +13,19 @@ qr/0 parameters were passed.*/,
 throws_ok{
     my %msg = parse_size({});
 }
-qr/Parameter #1.*/,
+qr/chunk size must be "lan", "wan", a positve integer, or 0 \(no chunking\)/,
 'parse_size wrong type';
 
 throws_ok{
     my %msg = parse_size(-1);
 }
-qr/Parameter #1.*/,
+qr/chunk size must be "lan", "wan", a positve integer, or 0 \(no chunking\)/,
 'parse_size invalid numeric value';
 
 throws_ok{
     my %msg = parse_size('wrong');
 }
-qr/Parameter #1.*/,
+qr/chunk size must be "lan", "wan", a positve integer, or 0 \(no chunking\)/,
 'parse_size invalid string value';
 
 my $size;
@@ -132,4 +132,4 @@ foreach my $lvl_name (
     is($level, $level_no++, "level long $lvl_name correct value");
 }
 
-done_testing();
+done_testing(51);

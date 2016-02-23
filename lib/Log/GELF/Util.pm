@@ -111,19 +111,38 @@ sub validate_message {
         params      => \@_,
         allow_extra => 1,
         spec        => {
-            version       => { regex => qr/^1\.1$/, default => '1.1' },
+            version       => {
+                default => '1.1',
+                callbacks => {
+                    version_check => sub {
+                        my $version = shift;
+                        $version =~ /^1\.1$/
+                            or die 'version must be 1.1, supplied $version';
+                    },
+                },
+            },
             host          => { type  => SCALAR },
             short_message => { type  => SCALAR },
             full_message  => { type  => SCALAR, optional => 1 },
             timestamp     => { type  => SCALAR, default  => time },
             level         => {
                 default => 1,
-                regex   => qr/^(?:0|1|2|3|4|5|6|7)$/,
+                callbacks => {
+                    level_check => sub {
+                        my $level = shift;
+                        $level =~ /^(?:0|1|2|3|4|5|6|7)$/
+                            or die 'level must be between 0 and 7 inclusive';
+                    },
+                },
             },
             facility      => {
                 optional  => 1,
-                regex     => qr/^\d+$/,
                 callbacks => {
+                    facility_check => sub {
+                        my $level = shift;
+                        $level =~ /^\d+$/
+                            or die 'facility must be a positive integer';
+                    },
                     deprecated => sub { warn "facility is deprecated, send as additional field instead" },
                 },
             },
@@ -172,9 +191,18 @@ sub compress {
     my @p = validate_pos(
         @_,
         { type  => SCALAR },
-        { regex => qr/^(?:zlib|gzip)$/, default => 'gzip' },
+        {
+            default => 'gzip',
+            callbacks => {
+                compress_type => sub {
+                    my $level = shift;
+                    $level =~ /^(?:zlib|gzip)$/
+                        or die 'compression type must be gzip (default) or zlib';
+                },
+            },
+        },
     );
-    
+
     my ($message, $type) = @p;
     
     my $method = \&gzip;
@@ -227,7 +255,14 @@ sub enchunk {
     my @p = validate_pos(
         @_,
         { type  => SCALAR },
-        { regex => qr/^\d+$/, default => parse_size('wan') },
+        {
+            default => parse_size('wan'),
+            callbacks => {
+                chunk_size => sub {
+                    return parse_size(shift);
+                },
+            },
+        },
     );
     
     my ($message, $size) = @p;
@@ -325,7 +360,15 @@ sub parse_level {
 sub parse_size {
     my @p = validate_pos(
         @_,
-        { regex => qr/^(lan|wan|\d+)$/i }
+        {
+            callbacks => {
+                compress_type => sub {
+                    my $size = shift;
+                    $size =~ /^(?:lan|wan|\d+)$/i
+                        or die 'chunk size must be "lan", "wan", a positve integer, or 0 (no chunking)';
+                },
+            },
+        },
     );
 
     my $size = shift @p;
@@ -343,14 +386,16 @@ sub parse_size {
     # For some discussion. I don't think this is an exact science!
 
     if ( lc($size) eq 'wan' ) {
-        return 1420;
+        $size = 1420;
     }
     elsif ( lc($size) eq 'lan' ) {
-        return 8152;
+        $size = 8152;
     }
-    else {
-        return $size;
+    elsif ( $size eq '0' ) {
+        $size = '0 but true';
     }
+
+    return $size;
 }
 
 1;

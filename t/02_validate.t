@@ -1,7 +1,7 @@
 use strict;
 use Test::More 0.98;
 use Test::Exception;
-use Test::Warnings 0.005 qw(warning);
+use Test::Warnings 0.005 qw(warning allow_warnings);
 
 use Log::GELF::Util qw(validate_message);
 
@@ -18,7 +18,7 @@ throws_ok{
         short_message  => 1,
     );
 }
-qr/The 'version' parameter \("1\.x"\).*/,
+qr/version must be 1.1, supplied.*/,
 'version check';
 
 throws_ok{
@@ -28,7 +28,7 @@ throws_ok{
         level          => 'x',
     );
 }
-qr/The 'level' parameter \("x"\).*/,
+qr/level must be between 0 and 7 inclusive/,
 'level check';
 
 throws_ok{
@@ -40,6 +40,18 @@ throws_ok{
 }
 qr/invalid field 'bad'.*/,
 'bad field check';
+
+allow_warnings 1; #throws legit warnings
+throws_ok{
+    validate_message(
+        host           => 1,
+        short_message  => 1,
+        facility       => 'wrong',
+    );
+}
+qr/facility must be a positive integer/,
+'bad facility check';
+allow_warnings 0;
 
 like( warning {
     validate_message(
@@ -74,4 +86,4 @@ my $time = time;
 is($msg->{version}, '1.1', 'correct default version');
 like($msg->{timestamp}, qr/\d+\.\d+/, 'default timestamp');
 
-done_testing(10);
+done_testing(11);

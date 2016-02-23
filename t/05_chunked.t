@@ -42,7 +42,7 @@ sub test_dechunk {
 };
 
 throws_ok{
-    my %msg = is_chunked();
+    is_chunked();
 }
 qr/0 parameters were passed.*/,
 'mandatory parameters missing';
@@ -52,12 +52,36 @@ ok( ! is_chunked( 'no magic' ), 'no magic' );
 ok( is_chunked( $GELF_MSG_MAGIC ), 'magic' );
 
 throws_ok{
-    my %msg = enchunk();
+   enchunk();
 }
-qr/0 parameters were passed.*/,
+qr/0 parameters were passed to Log::GELF::Util::enchunk but 2 were expected/,
 'mandatory parameters missing';
 
+throws_ok{
+    enchunk('0123456789', -1);
+}
+qr/chunk size must be "lan", "wan", a positve integer, or 0 \(no chunking\)/,
+'enchunk negative size';
+
+throws_ok{
+    enchunk('0123456789', 'x');
+}
+qr/chunk size must be "lan", "wan", a positve integer, or 0 \(no chunking\)/,
+'enchunk bad size';
+
 my @chunks;
+lives_ok{
+    @chunks = enchunk('0123456789', 0);
+}
+'enchunks ok - 0';
+is(scalar @chunks, 1, 'correct number of chunks - 0');
+
+lives_ok{
+    @chunks = enchunk('0123456789', 1);
+}
+'enchunks ok - 1';
+is(scalar @chunks, 10, 'correct number of chunks -  1');
+
 lives_ok{
     @chunks = enchunk(
         encode(
@@ -69,7 +93,7 @@ lives_ok{
         4
     );
 }
-'enchunks ok';
+'enchunks ok - message';
 
 throws_ok{
     decode_chunk();
@@ -131,5 +155,5 @@ $msg = decode_json(test_dechunk(@chunks));
 is($msg->{version}, '1.1',  'correct default version');
 is($msg->{host},    'host', 'correct default version');
 
-done_testing(19);
+done_testing(25);
 

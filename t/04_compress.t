@@ -22,7 +22,7 @@ qr/Parameter #1.*/,
 throws_ok{
     my %msg = compress(1,'wrong');
 }
-qr/Parameter #2.*/,
+qr/compression type must be gzip \(default\) or zlib/,
 'type parameters wrong';
 
 throws_ok{
