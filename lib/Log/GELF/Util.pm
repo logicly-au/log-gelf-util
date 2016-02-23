@@ -121,26 +121,17 @@ sub validate_message {
                     },
                 },
             },
-            host          => { type  => SCALAR },
-            short_message => { type  => SCALAR },
-            full_message  => { type  => SCALAR, optional => 1 },
-            timestamp     => { type  => SCALAR, default  => time },
-            level         => {
-                default => 1,
-                callbacks => {
-                    level_check => sub {
-                        my $level = shift;
-                        $level =~ /^(?:0|1|2|3|4|5|6|7)$/
-                            or die 'level must be between 0 and 7 inclusive';
-                    },
-                },
-            },
+            host          => { type => SCALAR },
+            short_message => { type => SCALAR },
+            full_message  => { type => SCALAR, optional => 1 },
+            timestamp     => { type => SCALAR, default  => time },
+            level         => { type => SCALAR, default  => 1 },
             facility      => {
                 optional  => 1,
                 callbacks => {
                     facility_check => sub {
-                        my $level = shift;
-                        $level =~ /^\d+$/
+                        my $facility = shift;
+                        $facility =~ /^\d+$/
                             or die 'facility must be a positive integer';
                     },
                     deprecated => sub { warn "facility is deprecated, send as additional field instead" },
@@ -155,7 +146,9 @@ sub validate_message {
             },
         },
     );
-    
+
+    $p{level} = parse_level($p{level});
+
     foreach my $key (keys %p ) {
         if ( $key eq '_id' ||
              ! ( exists $GELF_MESSAGE_FIELDS{$key} || $key =~ /^_/ )
@@ -254,20 +247,15 @@ sub uncompress {
 sub enchunk {
     my @p = validate_pos(
         @_,
-        { type  => SCALAR },
-        {
-            default => parse_size('wan'),
-            callbacks => {
-                chunk_size => sub {
-                    parse_size(shift());
-                },
-            },
-        },
+        { type => SCALAR },
+        { type => SCALAR, default => 'wan' },
     );
-    
+
     my ($message, $size) = @p;
 
-    if ( $size
+    $size = parse_size($size);
+
+    if ( $size > 0
          && length $message > $size
     ) {
         my @chunks;
@@ -353,7 +341,7 @@ sub parse_level {
         return $level;
     }
     else {
-        die "invalid log level";
+        die "level must be between 0 and 7 or a valid log level string";
     }
 }
 

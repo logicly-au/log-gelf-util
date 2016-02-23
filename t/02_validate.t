@@ -28,7 +28,7 @@ throws_ok{
         level          => 'x',
     );
 }
-qr/level must be between 0 and 7 inclusive/,
+qr/level must be between 0 and 7 or a valid log level string/,
 'level check';
 
 throws_ok{
@@ -83,7 +83,28 @@ lives_ok{
 'default version';
 
 my $time = time;
-is($msg->{version}, '1.1', 'correct default version');
+is($msg->{version},     '1.1', 'correct default version');
 like($msg->{timestamp}, qr/\d+\.\d+/, 'default timestamp');
+is($msg->{level},       1, 'default level');
 
-done_testing(11);
+lives_ok{
+    $msg = validate_message(
+        host           => 1,
+        short_message  => 1,
+        level          => 2,
+    );
+}
+'numeric level';
+is($msg->{level},       2, 'default level');
+
+lives_ok{
+    $msg = validate_message(
+        host           => 1,
+        short_message  => 1,
+        level          => 'err',
+    );
+}
+'numeric level';
+is($msg->{level}, 3, 'default level');
+
+done_testing(16);

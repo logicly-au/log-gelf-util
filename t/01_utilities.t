@@ -74,19 +74,19 @@ qr/Parameter #1.*/,
 throws_ok{
    parse_level(-1);
 }
-qr/invalid log level.*/,
+qr/level must be between 0 and 7 or a valid log level string/,
 'parse_level invalid numeric value';
 
 throws_ok{
    parse_level(8);
 }
-qr/invalid log level.*/,
+qr/level must be between 0 and 7 or a valid log level string/,
 'parse_level invalid numeric value - too big';
 
 throws_ok{
     parse_level('wrong');
 }
-qr/invalid log level.*/,
+qr/level must be between 0 and 7 or a valid log level string/,
 'parse_level invalid string value';
 
 my $level;

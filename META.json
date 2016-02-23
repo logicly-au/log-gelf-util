@@ -4,7 +4,7 @@
       "Adam Clarke <adam.clarke@strategicdata.com.au>"
    ],
    "dynamic_config" : 0,
-   "generated_by" : "Minilla/v3.0.1, CPAN::Meta::Converter version 2.143240",
+   "generated_by" : "Minilla/v3.0.1, CPAN::Meta::Converter version 2.150005",
    "license" : [
       "perl_5"
    ],
@@ -70,5 +70,6 @@
          "web" : "https://github.com/strategicdata/log-gelf-util"
       }
    },
-   "version" : "0.01"
+   "version" : "0.01",
+   "x_serialization_backend" : "JSON::PP version 2.27300"
 }
