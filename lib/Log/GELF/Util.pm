@@ -259,7 +259,7 @@ sub enchunk {
             default => parse_size('wan'),
             callbacks => {
                 chunk_size => sub {
-                    return parse_size(shift);
+                    parse_size(shift());
                 },
             },
         },
@@ -371,7 +371,7 @@ sub parse_size {
         },
     );
 
-    my $size = shift @p;
+    my $size = lc(shift @p);
 
     # These default values below were determined by
     # examining the code for Graylog's implementation. See
@@ -385,10 +385,10 @@ sub parse_size {
     # See http://stackoverflow.com/questions/14993000/the-most-reliable-and-efficient-udp-packet-size
     # For some discussion. I don't think this is an exact science!
 
-    if ( lc($size) eq 'wan' ) {
+    if ( $size eq 'wan' ) {
         $size = 1420;
     }
-    elsif ( lc($size) eq 'lan' ) {
+    elsif ( $size eq 'lan' ) {
         $size = 8152;
     }
     elsif ( $size eq '0' ) {

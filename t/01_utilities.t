@@ -32,20 +32,32 @@ my $size;
 lives_ok{
     $size = parse_size(1);
 }
-'numeric level';
+'numeric size';
 is($size, 1, 'correct numeric size');
 
 lives_ok{
     $size = parse_size('lan');
 }
-'string lan level';
-is($size, 8152, 'correct numeric size');
+'string lan size';
+is($size, 8152, 'correct lan size');
+
+lives_ok{
+    $size = parse_size('LAN');
+}
+'string LAN size';
+is($size, 8152, 'correct LAN size');
 
 lives_ok{
     $size = parse_size('wan');
 }
-'string wan level';
+'string wan size';
 is($size, 1420, 'correct numeric size');
+
+lives_ok{
+    $size = parse_size('WAN');
+}
+'string WAN size';
+is($size, 1420, 'correct WAN size');
 
 throws_ok{
    parse_level();
@@ -132,4 +144,4 @@ foreach my $lvl_name (
     is($level, $level_no++, "level long $lvl_name correct value");
 }
 
-done_testing(51);
+done_testing(55);
