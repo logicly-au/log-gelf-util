@@ -14,7 +14,7 @@ qr/0 parameters were passed.*/,
 throws_ok{
     my %msg = encode({});
 }
-qr/Mandatory parameters '(?:host|short_message)', '(?:host|short_message)' missing.*/,
+qr/Mandatory parameter 'short_message' missing.*/,
 'mandatory encode parameters missing';
 
 my $msg;
@@ -40,7 +40,7 @@ qr/0 parameters were passed.*/,
 throws_ok{
     my %msg = decode("{}");
 }
-qr/Mandatory parameters '(?:host|short_message)', '(?:host|short_message)' missing.*/,
+qr/Mandatory parameter 'short_message' missing.*/,
 'mandatory encode parameters missing';
 
 lives_ok{

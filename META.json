@@ -1,7 +1,7 @@
 {
-   "abstract" : "It's new $module",
+   "abstract" : "Utility functions for Graylog's GELF format.",
    "author" : [
-      "Adam Clarke <adam.clarke@strategicdata.com.au>"
+      "Adam Clarke <adamc@strategicdata.com.au>"
    ],
    "dynamic_config" : 0,
    "generated_by" : "Minilla/v3.0.1, CPAN::Meta::Converter version 2.150005",
@@ -46,6 +46,7 @@
             "Math::Random::MT" : "0",
             "Params::Validate" : "0",
             "Readonly" : "2.00",
+            "Sys::Hostname" : "0",
             "Time::HiRes" : "0",
             "perl" : "5.010"
          }
@@ -71,5 +72,8 @@
       }
    },
    "version" : "0.01",
+   "x_contributors" : [
+      "Adam Clarke <adam.clarke@strategicdata.com.au>"
+   ],
    "x_serialization_backend" : "JSON::PP version 2.27300"
 }

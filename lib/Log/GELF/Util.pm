@@ -33,6 +33,7 @@ use Params::Validate qw(
 );
 use Time::HiRes qw(time);
 use Sys::Syslog qw(:macros);
+use Sys::Hostname;
 use JSON::MaybeXS qw(encode_json decode_json);
 use IO::Compress::Gzip qw(gzip $GzipError);
 use IO::Uncompress::Gunzip qw(gunzip $GunzipError);
@@ -56,14 +57,14 @@ Readonly %LEVEL_NAME_TO_NUMBER => (
 );
 
 Readonly %LEVEL_NUMBER_TO_NAME => (
-    LOG_EMERG   =>  'emerg',
-    LOG_ALERT   =>  'alert',
-    LOG_CRIT    =>  'crit',
-    LOG_ERR     =>  'err',
-    LOG_WARNING =>  'warn',
-    LOG_NOTICE  =>  'notice',
-    LOG_INFO    =>  'info',
-    LOG_DEBUG   =>  'debug',
+    &LOG_EMERG   =>  'emerg',
+    &LOG_ALERT   =>  'alert',
+    &LOG_CRIT    =>  'crit',
+    &LOG_ERR     =>  'err',
+    &LOG_WARNING =>  'warn',
+    &LOG_NOTICE  =>  'notice',
+    &LOG_INFO    =>  'info',
+    &LOG_DEBUG   =>  'debug',
 );
 
 Readonly %GELF_MESSAGE_FIELDS => (
@@ -73,8 +74,9 @@ Readonly %GELF_MESSAGE_FIELDS => (
     full_message   => 1,
     timestamp      => 1,
     level          => 1,
-    facility       => 1,
-    file           => 1,
+    facility       => 0,
+    line           => 0,
+    file           => 0,
 );
 
 my $ln = '^(' .
@@ -97,6 +99,7 @@ undef $ln;
     compress
     uncompress
     enchunk
+    dechunk
     is_chunked
     decode_chunk
     parse_level
@@ -121,10 +124,20 @@ sub validate_message {
                     },
                 },
             },
-            host          => { type => SCALAR },
+            host          => { type => SCALAR, default => hostname() },
             short_message => { type => SCALAR },
             full_message  => { type => SCALAR, optional => 1 },
-            timestamp     => { type => SCALAR, default  => time },
+            timestamp     => {
+                type => SCALAR,
+                default   => time(),
+                callbacks => {
+                    ts_format => sub {
+                        my $ts = shift;
+                        $ts =~ /^\d+(?:\.\d+)*$/
+                            or die 'bad timestamp';
+                    },
+                },
+            },
             level         => { type => SCALAR, default  => 1 },
             facility      => {
                 type      => SCALAR,
@@ -133,31 +146,49 @@ sub validate_message {
                     facility_check => sub {
                         my $facility = shift;
                         $facility =~ /^\d+$/
-                            or die 'facility must be a positive integer';
+                            or die 'facility must be a number';
                     },
-                    deprecated => sub { warn "facility is deprecated, send as additional field instead" },
+                },
+            },
+            line          => {
+                type      => SCALAR,
+                optional  => 1,
+                callbacks => {
+                    facility_check => sub {
+                        my $line = shift;
+                        $line =~ /^\d+$/
+                            or die 'line must be a number';
+                    },
                 },
             },
             file          => {
                 type      => SCALAR,
                 optional  => 1,
-                callbacks => {
-                    deprecated => sub { warn "file is deprecated, send as additional field instead" },
-                },
             },
         },
     );
 
     $p{level} = parse_level($p{level});
 
-    foreach my $key (keys %p ) {
+    foreach my $key ( keys %p ) {
+
+        if ( ! $key =~ /^[\w\.\-]+$/ ) {
+            die "invalid field name '$key'";
+        }
+
         if ( $key eq '_id' ||
              ! ( exists $GELF_MESSAGE_FIELDS{$key} || $key =~ /^_/ )
         ) {
-               die "invalid field '$key'";
+            die "invalid field '$key'";
+        }
+
+        if ( exists $GELF_MESSAGE_FIELDS{$key}
+             && $GELF_MESSAGE_FIELDS{$key} == 0 ) {
+            # field is deprecated
+            warn "$key is deprecated, send as additional field instead";
         }
     }
-    
+
     return \%p;
 }
 
@@ -290,6 +321,37 @@ sub enchunk {
     }
 }
 
+sub dechunk {
+    my @p = validate_pos(
+        @_,
+        { type => ARRAYREF },
+        { type => HASHREF },
+    );
+
+    my ($accumulator, $chunk) = @_;
+
+    if ( ! exists $chunk->{id}
+           && exists $chunk->{sequence_number}
+           && exists $chunk->{sequence_count}
+           && exists $chunk->{data}
+    ) {
+        die 'malformed chunk';
+    }
+
+    if ($chunk->{sequence_number} > $chunk->{sequence_count} ) {
+        die 'chunk sequence number > count';
+    }
+
+    $accumulator->[$chunk->{sequence_number}] = $chunk->{data};
+
+    if ( scalar @{$accumulator} == $chunk->{sequence_count} ) {
+        return join '', @{$accumulator};
+    }
+    else {
+        return;
+    }
+}
+
 sub is_chunked {
     my @p = validate_pos(
         @_,
@@ -393,26 +455,236 @@ __END__
 
 =head1 NAME
 
-Log::GELF::Util - It's new $module
+Log::GELF::Util - Utility functions for Graylog's GELF format.
 
 =head1 SYNOPSIS
 
-    use Log::GELF::Util;
+    use Log::GELF::Util qw( encode );
+
+    my $msg = encode( { short_message => 'message', } );
+
+
+    use Log::GELF::Util qw( :all );
+
+    sub process_chunks {
+
+        my @chunks; my $msg;
+
+        do {
+            $msg = dechunk(\@chunks, decode_chunk(shift()));
+        } until ($msg);
+
+        return uncompress( $msg );
+    };
+
+    my $hr = validate_message( short_message => 'message' );
 
 =head1 DESCRIPTION
 
-Log::GELF::Util is ...
+Log::GELF::Util is a collection of functions and data structures useful
+when working with Graylog's GELF Format version 1.1. It strives to support
+all of the features and options as described by
+http://docs.graylog.org/en/latest/pages/gelf.html.
+
+=head1 FUNCTIONS
+
+=head2 validate_message( short_message => $ )
+
+Returns a HASHREF representing the validated message with any defaulted
+values added to the data structure.
+
+Takes the following message parameters as per the GELF message
+specification:
+
+=over
+
+=item short_message
+
+Mandatory string, a short descriptive message
+
+=item version
+
+String, must be '1.1' which is the default.
+
+=item host
+
+String, defaults to hostname() from C<Sys::Hostname>.
+
+=item timestamp
+
+Timestamp, defaults to time() from C<Time::HiRes>.
+
+=item level
+
+Integer, equal to the standard syslog levels, default is 1 (ALERT).
+
+=item facility
+
+Deprecated, a warning will be issued.
+
+=item line
+
+Deprecated, a warning will be issued.
+
+=item file
+
+Deprecated, a warning will be issued.
+
+=item _[additional_field]
+
+Parameters prefixed with an underscore (_) will be treated as an additional
+field. Allowed characters in field names are any word character (letter,
+number, underscore), dashes and dots. As per the specification '_id' is
+dissallowed.
+
+=back
+
+=head2 encode( \% )
+
+Accepts HASHREF to a structure representing a GELF message. The message
+will be converted validated with C<validate_message>.
+
+Returns a JSON encoded string representing the message.
+
+=head2 decode( $ )
+
+Accepts a JSON encoded string representing the message. This will be
+convertd to a hashref and validated with C<validate_message>.
+
+Returns a HASHREF representing the validated message with any defaulted
+values added to the data structure.
+
+=head2 compress( $ [, $] )
+
+Accepts a string and compresses it. The second parameter is optional and
+can take the value 'zlib' or 'gzip', defaulting to 'gzip'.
+
+Returns a compressed string.
+
+=head2 uncompress( $ )
+
+Accepts a string and uncompresses it. The compression method (gzip or zlib)
+is determined automatically. Uncompressed strings are passed through
+unaltered.
+
+Returns an uncompressed string.
+
+=head2 enchunk( $ [, $] )
+
+Accepts an encoded message (JSON string) and chunks it according to the
+GELF chunking protocol.
+
+The optional second parameter is the maximum size of the chunks to produce,
+this must be a positive integer or the special strings 'lan' or 'wan', see
+C<parse_size>. Defaults to 'wan'. A zero chunksize means no chunking will
+be applied.
+
+If the message size is greater than the maximum size then an array of
+chunks is retuned, otherwise the message is retuned unaltered as the first
+element of an array.
+
+=head2 dechunk( \@, \% )
+
+This facilitates reassembling a GELF message from a stream of chunks.
+
+It accepts an ARRAYREF for accumulating the chunks and a HASHREF
+representing a decoded message chunk as produced by C<decode_chunk>.
+
+It returns undef if the accumulator is not complete, i.e. all chunks have
+not yet been passed it.
+
+Once the accumulator is complete it returns the dechunked message in the
+form of a string. Note that this message may still be compressed.
+
+Here is an example useage:
+
+    sub process_chunks {
+
+        my @chunks; my $msg;
+
+        do {
+            $msg = dechunk(\@chunks, decode_chunk(shift()));
+        } until ($msg);
+
+        return $msg;
+    };
+
+=head2 is_chunked( $ )
+
+Accepts a string and returns a true value if it is a GELF message chunk.
+
+=head2 decode_chunk( $ )
+
+Accepts a GELF message chunk and returns an ARRAYREF representing the
+chunk. The message consists of the following keys:
+
+ id sequence_number sequence_count data
+
+decode_chunk dies if the input is not a GELF chunk.
+
+=head2 parse_level( $ )
+
+Accepts a syslog style level in the form of a number (1-7) or a string
+being one of 'emerg', 'alert', 'crit', 'err', 'warn', 'notice', 'info', or
+'debug'.
+
+The string forms may also be elongaged and will still be accpted. For
+example 'err' and 'error' are equivalent.
+
+The associated syslog level is returned in numeric form.
+
+parse_level dies upon invalid input.
+
+=head2 parse_size( $ )
+
+Accepts integer specifying the chunk size or the special string values
+'lan' or 'wan' corresponding to 8154 or 1420 respectively. An explanation
+of these values is in the code.
+
+Returns the passed size or the value corresponding to the 'lan' or 'wan'.
+
+parse_size dies upon invalid input.
+
+=head1 CONSTANTS
+
+All Log::Gelf::Util constants are Readonly perl structures. You must use
+sigils when referencing them. They can be impored individually and are
+included when importing ':all';
+
+=head2 $GELF_MSG_MAGIC
+
+The magic number used to identify a GELF message chunk.
+
+=head2 $ZLIB_MAGIC
+
+The magic number used to identify a Zlib deflated message.
+
+=head2 $GZIP_MAGIC
+
+The magic number used to identify a gzipped message.
+
+=head2 %LEVEL_NAME_TO_NUMBER
+
+A HASH mapping the level names to numbers.
+
+=head2 %LEVEL_NUMBER_TO_NAME
+
+A HASH mapping the level numbers to names.
+
+=head2 %GELF_MESSAGE_FIELDS
+
+A HASH where each key is a valid core GELF message field name. Deprecated
+fields are associated with a false value.
 
 =head1 LICENSE
 
-Copyright (C) Adam Clarke.
+Copyright (C) Strategic Data.
 
-This library is free software; you can redistribute it and/or modify
-it under the same terms as Perl itself.
+This library is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.
 
 =head1 AUTHOR
 
-Adam Clarke E<lt>adam.clarke@strategicdata.com.auE<gt>
+Adam Clarke E<lt>adamc@strategicdata.com.auE<gt>
 
 =cut
-

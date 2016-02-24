@@ -10,6 +10,8 @@ use Log::GELF::Util qw(
     uncompress
     is_chunked
     enchunk
+    dechunk
+    decode_chunk
     encode
     $GELF_MSG_MAGIC
 );
@@ -19,25 +21,14 @@ use IO::Uncompress::Gunzip qw(gunzip $GunzipError);
 use IO::Uncompress::Inflate qw(inflate $InflateError);
 
 sub test_dechunk {
-    
-    my $last_msg_id;
+
+    my @chunks;
     my $msg;
 
-    foreach my $chunk (@_) {
+    do {
+        $msg = dechunk(\@chunks, decode_chunk(shift()));
+    } until ($msg);
 
-        my $chunk = decode_chunk( $chunk );
-
-        die "sequence_number > sequence count - should not happen"
-            if $chunk->{sequence_number} > $chunk->{sequence_count};
-
-        die "message_id <> last message_id - should not happen"
-            if defined $last_msg_id && $last_msg_id ne $chunk->{id};
-
-        $last_msg_id = $chunk->{id};
-        
-        $msg .= $chunk->{data};
-    }
-    
     return uncompress( $msg );
 };
 
