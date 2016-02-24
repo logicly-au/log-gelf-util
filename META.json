@@ -71,7 +71,7 @@
          "web" : "https://github.com/strategicdata/log-gelf-util"
       }
    },
-   "version" : "0.01",
+   "version" : "0.90",
    "x_contributors" : [
       "Adam Clarke <adam.clarke@strategicdata.com.au>"
    ],
