@@ -21,7 +21,6 @@ our (
 );
 
 $VERSION = "0.91";
-Readonly $VERSION;
 
 use Params::Validate qw(
     validate
