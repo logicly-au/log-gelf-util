@@ -60,7 +60,7 @@ specification:
 
 - level
 
-    Integer, equal to the standard syslog levels, default is 1 (ALERT).
+    Integer, equal to the standard `syslog` levels, default is 1 (ALERT).
 
 - facility
 
@@ -79,53 +79,53 @@ specification:
     Parameters prefixed with an underscore (\_) will be treated as an additional
     field. Allowed characters in field names are any word character (letter,
     number, underscore), dashes and dots. As per the specification '\_id' is
-    dissallowed.
+    disallowed.
 
-## encode( \\% )
+## `encode( \% )`
 
 Accepts HASHREF to a structure representing a GELF message. The message
 will be converted validated with `validate_message`.
 
 Returns a JSON encoded string representing the message.
 
-## decode( $ )
+## `decode( $ )`
 
 Accepts a JSON encoded string representing the message. This will be
-convertd to a hashref and validated with `validate_message`.
+converted to a hashref and validated with `validate_message`.
 
 Returns a HASHREF representing the validated message with any defaulted
 values added to the data structure.
 
-## compress( $ \[, $\] )
+## `compress( $ [, $] )`
 
 Accepts a string and compresses it. The second parameter is optional and
-can take the value 'zlib' or 'gzip', defaulting to 'gzip'.
+can take the value `zlib` or `gzip`, defaulting to `gzip`.
 
 Returns a compressed string.
 
-## uncompress( $ )
+## `uncompress( $ )`
 
-Accepts a string and uncompresses it. The compression method (gzip or zlib)
-is determined automatically. Uncompressed strings are passed through
-unaltered.
+Accepts a string and uncompresses it. The compression method (`gzip` or
+`zlib`) is determined automatically. Uncompressed strings are passed
+through unaltered.
 
 Returns an uncompressed string.
 
-## enchunk( $ \[, $\] )
+## `enchunk( $ [, $] )`
 
 Accepts an encoded message (JSON string) and chunks it according to the
 GELF chunking protocol.
 
 The optional second parameter is the maximum size of the chunks to produce,
-this must be a positive integer or the special strings 'lan' or 'wan', see
-`parse_size`. Defaults to 'wan'. A zero chunksize means no chunking will
-be applied.
+this must be a positive integer or the special strings `'lan'` or `'wan'`,
+see `parse_size`. Defaults to 'wan'. A zero chunk size means no chunking
+will be applied.
 
 If the message size is greater than the maximum size then an array of
 chunks is retuned, otherwise the message is retuned unaltered as the first
 element of an array.
 
-## dechunk( \\@, \\% )
+## `dechunk( \@, \% )`
 
 This facilitates reassembling a GELF message from a stream of chunks.
 
@@ -135,14 +135,15 @@ representing a decoded message chunk as produced by `decode_chunk`.
 It returns undef if the accumulator is not complete, i.e. all chunks have
 not yet been passed it.
 
-Once the accumulator is complete it returns the dechunked message in the
+Once the accumulator is complete it returns the de-chunked message in the
 form of a string. Note that this message may still be compressed.
 
-Here is an example useage:
+Here is an example usage:
 
     sub process_chunks {
 
-        my @chunks; my $msg;
+        my @chunks;
+        my $msg;
 
         do {
             $msg = dechunk(\@chunks, decode_chunk(shift()));
@@ -151,11 +152,11 @@ Here is an example useage:
         return $msg;
     };
 
-## is\_chunked( $ )
+## `is_chunked( $ )`
 
 Accepts a string and returns a true value if it is a GELF message chunk.
 
-## decode\_chunk( $ )
+## `decode_chunk( $ )`
 
 Accepts a GELF message chunk and returns an ARRAYREF representing the
 chunk. The message consists of the following keys:
@@ -164,33 +165,33 @@ chunk. The message consists of the following keys:
 
 decode\_chunk dies if the input is not a GELF chunk.
 
-## parse\_level( $ )
+## `parse_level( $ )`
 
-Accepts a syslog style level in the form of a number (1-7) or a string
-being one of 'emerg', 'alert', 'crit', 'err', 'warn', 'notice', 'info', or
-'debug'.
+Accepts a `syslog` style level in the form of a number (1-7) or a string
+being one of '`emerg`', '`alert`', '`crit`', '`err`', '`warn`',
+'`notice`', '`info`', or '<debug>'.
 
-The string forms may also be elongaged and will still be accpted. For
+The string forms may also be elongated and will still be accepted. For
 example 'err' and 'error' are equivalent.
 
-The associated syslog level is returned in numeric form.
+The associated `syslog` level is returned in numeric form.
 
 parse\_level dies upon invalid input.
 
-## parse\_size( $ )
+## `parse_size( $ )`
 
 Accepts integer specifying the chunk size or the special string values
-'lan' or 'wan' corresponding to 8154 or 1420 respectively. An explanation
+'`lan`' or '`wan`' corresponding to 8154 or 1420 respectively. An explanation
 of these values is in the code.
 
-Returns the passed size or the value corresponding to the 'lan' or 'wan'.
+Returns the passed size or the value corresponding to the '`lan`' or '`wan`'.
 
 parse\_size dies upon invalid input.
 
 # CONSTANTS
 
 All Log::Gelf::Util constants are Readonly perl structures. You must use
-sigils when referencing them. They can be impored individually and are
+sigils when referencing them. They can be imported individually and are
 included when importing ':all';
 
 ## $GELF\_MSG\_MAGIC
