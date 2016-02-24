@@ -3,6 +3,7 @@ use warnings;
 
 use Test::More;
 use Test::Exception;
+use List::Util qw(shuffle);
 
 use Log::GELF::Util qw(
     decode_chunk
@@ -127,9 +128,13 @@ lives_ok{
 }
 'enchunks compressed gzip ok';
 
-$msg = decode_json(test_dechunk(@chunks));
-is($msg->{version}, '1.1',  'correct default version');
-is($msg->{host},    'host', 'correct default version');
+foreach my $i (1 ..10) {
+
+    $msg = decode_json(test_dechunk(shuffle @chunks));
+    is($msg->{version}, '1.1',  "correct default version $i");
+    is($msg->{host},    'host', "correct host $i");
+
+}
 
 lives_ok{
     @chunks = enchunk(
@@ -151,5 +156,5 @@ $msg = decode_json(test_dechunk(@chunks));
 is($msg->{version}, '1.1',  'correct default version');
 is($msg->{host},    'host', 'correct default version');
 
-done_testing(26);
+done_testing(44);
 

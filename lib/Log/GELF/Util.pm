@@ -344,7 +344,7 @@ sub dechunk {
 
     $accumulator->[$chunk->{sequence_number}] = $chunk->{data};
 
-    if ( scalar @{$accumulator} == $chunk->{sequence_count} ) {
+    if ( (scalar grep {defined} @{$accumulator}) == $chunk->{sequence_count} ) {
         return join '', @{$accumulator};
     }
     else {
