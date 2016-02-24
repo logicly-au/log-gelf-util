@@ -1,5 +1,5 @@
 use strict;
-use Test::More 0.98;
+use Test::More 0.91;
 use Test::Exception;
 use IO::Uncompress::Gunzip qw(gunzip $GunzipError);
 use IO::Uncompress::Inflate qw(inflate $InflateError) ;
