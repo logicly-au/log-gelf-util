@@ -2,6 +2,10 @@ Revision history for Perl extension Log-GELF-Util
 
 {{$NEXT}}
 
+0.92 2016-02-24T23:22:01Z
+
+    - fixed bug introduced with Readonly.pm v2.01
+
 0.91 2016-02-24T22:47:40Z
 
     - dechunk() now handles chunks being passed in random order
