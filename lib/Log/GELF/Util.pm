@@ -141,13 +141,6 @@ sub validate_message {
             facility      => {
                 type      => SCALAR,
                 optional  => 1,
-                callbacks => {
-                    facility_check => sub {
-                        my $facility = shift;
-                        $facility =~ /^\d+$/
-                            or die 'facility must be a number';
-                    },
-                },
             },
             line          => {
                 type      => SCALAR,

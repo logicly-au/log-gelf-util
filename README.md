@@ -232,4 +232,4 @@ under the same terms as Perl itself.
 
 # AUTHOR
 
-Adam Clarke <adamc@strategicdata.com.au>
+Adam Clarke &lt;adamc@strategicdata.com.au>
