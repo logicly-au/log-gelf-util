@@ -20,7 +20,7 @@ our (
     $LEVEL_NAME_REGEX,
 );
 
-$VERSION = "0.93";
+$VERSION = "0.94";
 
 use Params::Validate qw(
     validate
