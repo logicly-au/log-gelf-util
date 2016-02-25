@@ -467,7 +467,8 @@ Log::GELF::Util - Utility functions for Graylog's GELF format.
 
     sub process_chunks {
 
-        my @chunks; my $msg;
+        my @chunks;
+        my $msg;
 
         do {
             $msg = dechunk(\@chunks, decode_chunk(shift()));
@@ -482,8 +483,8 @@ Log::GELF::Util - Utility functions for Graylog's GELF format.
 
 Log::GELF::Util is a collection of functions and data structures useful
 when working with Graylog's GELF Format version 1.1. It strives to support
-all of the features and options as described by
-http://docs.graylog.org/en/latest/pages/gelf.html.
+all of the features and options as described in the L<GELF
+specification|http://docs.graylog.org/en/latest/pages/gelf.html>.
 
 =head1 FUNCTIONS
 
@@ -507,11 +508,11 @@ String, must be '1.1' which is the default.
 
 =item host
 
-String, defaults to hostname() from C<Sys::Hostname>.
+String, defaults to hostname() from L<Sys::Hostname>.
 
 =item timestamp
 
-Timestamp, defaults to time() from C<Time::HiRes>.
+Timestamp, defaults to time() from L<Time::HiRes>.
 
 =item level
 
@@ -538,14 +539,14 @@ disallowed.
 
 =back
 
-=head2 C<encode( \% )>
+=head2 encode( \% )
 
 Accepts HASHREF to a structure representing a GELF message. The message
 will be converted validated with C<validate_message>.
 
 Returns a JSON encoded string representing the message.
 
-=head2 C<decode( $ )>
+=head2 decode( $ )
 
 Accepts a JSON encoded string representing the message. This will be
 converted to a hashref and validated with C<validate_message>.
@@ -553,14 +554,14 @@ converted to a hashref and validated with C<validate_message>.
 Returns a HASHREF representing the validated message with any defaulted
 values added to the data structure.
 
-=head2 C<compress( $ [, $] )>
+=head2 compress( $ [, $] )
 
 Accepts a string and compresses it. The second parameter is optional and
 can take the value C<zlib> or C<gzip>, defaulting to C<gzip>.
 
 Returns a compressed string.
 
-=head2 C<uncompress( $ )>
+=head2 uncompress( $ )
 
 Accepts a string and uncompresses it. The compression method (C<gzip> or
 C<zlib>) is determined automatically. Uncompressed strings are passed
@@ -568,26 +569,26 @@ through unaltered.
 
 Returns an uncompressed string.
 
-=head2 C<enchunk( $ [, $] )>
+=head2 enchunk( $ [, $] )
 
 Accepts an encoded message (JSON string) and chunks it according to the
 GELF chunking protocol.
 
 The optional second parameter is the maximum size of the chunks to produce,
 this must be a positive integer or the special strings C<'lan'> or C<'wan'>,
-see C<parse_size>. Defaults to 'wan'. A zero chunk size means no chunking
+see L</parse_size>. Defaults to 'wan'. A zero chunk size means no chunking
 will be applied.
 
 If the message size is greater than the maximum size then an array of
 chunks is retuned, otherwise the message is retuned unaltered as the first
 element of an array.
 
-=head2 C<dechunk( \@, \% )>
+=head2 dechunk( \@, \% )
 
 This facilitates reassembling a GELF message from a stream of chunks.
 
 It accepts an ARRAYREF for accumulating the chunks and a HASHREF
-representing a decoded message chunk as produced by C<decode_chunk>.
+representing a decoded message chunk as produced by L</decode_chunk>.
 
 It returns undef if the accumulator is not complete, i.e. all chunks have
 not yet been passed it.
@@ -609,41 +610,44 @@ Here is an example usage:
         return $msg;
     };
 
-=head2 C<is_chunked( $ )>
+=head2 is_chunked( $ )
 
 Accepts a string and returns a true value if it is a GELF message chunk.
 
-=head2 C<decode_chunk( $ )>
+=head2 decode_chunk( $ )
 
 Accepts a GELF message chunk and returns an ARRAYREF representing the
 chunk. The message consists of the following keys:
 
- id sequence_number sequence_count data
+ id
+ sequence_number
+ sequence_count
+ data
 
-decode_chunk dies if the input is not a GELF chunk.
+C<decode_chunk> dies if the input is not a GELF chunk.
 
-=head2 C<parse_level( $ )>
+=head2 parse_level( $ )
 
 Accepts a C<syslog> style level in the form of a number (1-7) or a string
-being one of 'C<emerg>', 'C<alert>', 'C<crit>', 'C<err>', 'C<warn>',
-'C<notice>', 'C<info>', or '<debug>'.
+being one of C<emerg>, C<alert>, C<crit>, C<err>, C<warn>, C<notice>,
+C<info>, or C<debug>.
 
 The string forms may also be elongated and will still be accepted. For
-example 'err' and 'error' are equivalent.
+example C<err> and C<error> are equivalent.
 
 The associated C<syslog> level is returned in numeric form.
 
-parse_level dies upon invalid input.
+L</parse_level> dies upon invalid input.
 
-=head2 C<parse_size( $ )>
+=head2 parse_size( $ )
 
 Accepts integer specifying the chunk size or the special string values
-'C<lan>' or 'C<wan>' corresponding to 8154 or 1420 respectively. An explanation
+C<lan> or C<wan> corresponding to 8154 or 1420 respectively. An explanation
 of these values is in the code.
 
-Returns the passed size or the value corresponding to the 'C<lan>' or 'C<wan>'.
+Returns the passed size or the value corresponding to the C<lan> or C<wan>.
 
-parse_size dies upon invalid input.
+L</parse_size> dies upon invalid input.
 
 =head1 CONSTANTS
 
