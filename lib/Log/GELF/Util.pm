@@ -291,7 +291,6 @@ sub enchunk {
         my $n_chunks = scalar @chunks;
         die 'Message too big' if $n_chunks > 128;
 
-        my $magic          = pack('C*', 0x1e,0x0f); # Chunked GELF magic
         my $message_id     = pack('L*', irand(),irand());
         my $sequence_count = pack('C*', $n_chunks);
 
@@ -299,7 +298,7 @@ sub enchunk {
         my $sequence_number = 0;
         foreach my $chunk (@chunks) {
            push @chunks_w_header,
-              $magic
+              $GELF_MSG_MAGIC
               . $message_id
               . pack('C*',$sequence_number++)
               . $sequence_count
