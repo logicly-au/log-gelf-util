@@ -14,14 +14,17 @@ Log::GELF::Util - Utility functions for Graylog's GELF format.
 
     sub process_chunks {
 
-        my @chunks;
+        my @accumulator;
         my $msg;
 
         do {
-            $msg = dechunk(\@chunks, decode_chunk(shift()));
+            $msg = dechunk(
+                \@accumulator,
+                decode_chunk(shift())
+            );
         } until ($msg);
 
-        return uncompress( $msg );
+        return uncompress($msg);
     };
 
     my $hr = validate_message( short_message => 'message' );
@@ -61,7 +64,7 @@ specification:
 
 - level
 
-    Integer, equal to the standard `syslog` levels, default is 1 (ALERT).
+    Integer, equal to the standard syslog levels, default is 1 (ALERT).
 
 - facility
 
@@ -84,15 +87,15 @@ specification:
 
 ## encode( \\% )
 
-Accepts HASHREF to a structure representing a GELF message. The message
-will be converted validated with `validate_message`.
+Accepts a HASHREF representing a GELF message. The message will be
+validated with ["validate\_message"](#validate_message).
 
 Returns a JSON encoded string representing the message.
 
 ## decode( $ )
 
 Accepts a JSON encoded string representing the message. This will be
-converted to a hashref and validated with `validate_message`.
+converted to a hashref and validated with ["validate\_message"](#validate_message).
 
 Returns a HASHREF representing the validated message with any defaulted
 values added to the data structure.
@@ -118,8 +121,8 @@ Accepts an encoded message (JSON string) and chunks it according to the
 GELF chunking protocol.
 
 The optional second parameter is the maximum size of the chunks to produce,
-this must be a positive integer or the special strings `'lan'` or `'wan'`,
-see ["parse\_size"](#parse_size). Defaults to 'wan'. A zero chunk size means no chunking
+this must be a positive integer or the special strings `lan` or `wan`,
+see ["parse\_size"](#parse_size). Defaults to `wan`. A zero chunk size means no chunking
 will be applied.
 
 If the message size is greater than the maximum size then an array of
@@ -143,14 +146,17 @@ Here is an example usage:
 
     sub process_chunks {
 
-        my @chunks;
+        my @accumulator;
         my $msg;
 
         do {
-            $msg = dechunk(\@chunks, decode_chunk(shift()));
+            $msg = dechunk(
+                \@accumulator,
+                decode_chunk(shift())
+            );
         } until ($msg);
 
-        return $msg;
+        return uncompress($msg);
     };
 
 ## is\_chunked( $ )
@@ -160,31 +166,29 @@ Accepts a string and returns a true value if it is a GELF message chunk.
 ## decode\_chunk( $ )
 
 Accepts a GELF message chunk and returns an ARRAYREF representing the
-chunk. The message consists of the following keys:
+unpacked chunk. Dies if the input is not a GELF chunk.
+
+The message consists of the following keys:
 
     id
     sequence_number
     sequence_count
     data
 
-`decode_chunk` dies if the input is not a GELF chunk.
-
 ## parse\_level( $ )
 
 Accepts a `syslog` style level in the form of a number (1-7) or a string
 being one of `emerg`, `alert`, `crit`, `err`, `warn`, `notice`,
-`info`, or `debug`.
+`info`, or `debug`. Dies upon invalid input.
 
 The string forms may also be elongated and will still be accepted. For
 example `err` and `error` are equivalent.
 
-The associated `syslog` level is returned in numeric form.
-
-["parse\_level"](#parse_level) dies upon invalid input.
+The associated syslog level is returned in numeric form.
 
 ## parse\_size( $ )
 
-Accepts integer specifying the chunk size or the special string values
+Accepts an integer specifying the chunk size or the special string values
 `lan` or `wan` corresponding to 8154 or 1420 respectively. An explanation
 of these values is in the code.
 
