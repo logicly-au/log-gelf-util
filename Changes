@@ -2,6 +2,11 @@ Revision history for Perl extension Log-GELF-Util
 
 {{$NEXT}}
 
+0.95 2016-02-26T00:26:50Z
+
+    - improve documentaion
+    - make use of GELF message magic constant in enchunk()
+
 0.94 2016-02-25T12:16:02Z
 
     - facility was incorrectly limited to numbers
