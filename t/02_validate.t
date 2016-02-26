@@ -66,10 +66,10 @@ throws_ok{
     validate_message(
         host           => 1,
         short_message  => 1,
-        facility       => 'wrong',
+        facility       => {},
     );
 }
-qr/facility must be a number/,
+qr/The 'facility' parameter.*/,
 'bad facility check';
 
 throws_ok{
