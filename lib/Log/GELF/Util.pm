@@ -20,7 +20,7 @@ our (
     $LEVEL_NAME_REGEX,
 );
 
-$VERSION = "0.95";
+$VERSION = "0.96";
 
 use Params::Validate qw(
     validate
@@ -579,7 +579,7 @@ see L</parse_size>. Defaults to C<wan>. A zero chunk size means no chunking
 will be applied.
 
 The optional third parameter is the message id used to identify associated
-chunks. This must be 8 bytes. It defauts to 8 bytes of randomness generated
+chunks. This must be 8 bytes. It defaults to 8 bytes of randomness generated
 by L<Math::Random::MT>.
 
 If the message size is greater than the maximum size then an array of

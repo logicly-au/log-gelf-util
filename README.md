@@ -126,7 +126,7 @@ see ["parse\_size"](#parse_size). Defaults to `wan`. A zero chunk size means no 
 will be applied.
 
 The optional third parameter is the message id used to identify associated
-chunks. This must be 8 bytes. It defauts to 8 bytes of randomness generated
+chunks. This must be 8 bytes. It defaults to 8 bytes of randomness generated
 by [Math::Random::MT](https://metacpan.org/pod/Math::Random::MT).
 
 If the message size is greater than the maximum size then an array of
