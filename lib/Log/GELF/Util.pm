@@ -274,9 +274,14 @@ sub enchunk {
         @_,
         { type => SCALAR },
         { type => SCALAR, default => 'wan' },
+        { type => SCALAR, default => pack('L*', irand(),irand()) },
     );
 
-    my ($message, $size) = @p;
+    my ($message, $size, $message_id) = @p;
+
+    if ( length $message_id != 8 ) {
+        die "message id must be 8 bytes";
+    }
 
     $size = parse_size($size);
 
@@ -291,7 +296,6 @@ sub enchunk {
         my $n_chunks = scalar @chunks;
         die 'Message too big' if $n_chunks > 128;
 
-        my $message_id     = pack('L*', irand(),irand());
         my $sequence_count = pack('C*', $n_chunks);
 
         my @chunks_w_header;
@@ -364,7 +368,7 @@ sub decode_chunk {
 
     if ( is_chunked($encoded_chunk) ) {
         
-        my $id      = join '', unpack('LL', substr $encoded_chunk,  2, 8);
+        my $id      = substr $encoded_chunk,  2, 8;
         my $seq_no  = unpack('C',  substr $encoded_chunk, 10, 1);
         my $seq_cnt = unpack('C',  substr $encoded_chunk, 11, 1);
         my $data    = substr $encoded_chunk, 12;
@@ -564,7 +568,7 @@ through unaltered.
 
 Returns an uncompressed string.
 
-=head2 enchunk( $ [, $] )
+=head2 enchunk( $ [, $, $] )
 
 Accepts an encoded message (JSON string) and chunks it according to the
 GELF chunking protocol.
@@ -573,6 +577,10 @@ The optional second parameter is the maximum size of the chunks to produce,
 this must be a positive integer or the special strings C<lan> or C<wan>,
 see L</parse_size>. Defaults to C<wan>. A zero chunk size means no chunking
 will be applied.
+
+The optional third parameter is the message id used to identify associated
+chunks. This must be 8 bytes. It defauts to 8 bytes of randomness generated
+by L<Math::Random::MT>.
 
 If the message size is greater than the maximum size then an array of
 chunks is retuned, otherwise the message is retuned unaltered as the first

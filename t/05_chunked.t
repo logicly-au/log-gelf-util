@@ -4,6 +4,7 @@ use warnings;
 use Test::More;
 use Test::Exception;
 use List::Util qw(shuffle);
+use Math::Random::MT qw(irand);
 
 use Log::GELF::Util qw(
     decode_chunk
@@ -46,7 +47,7 @@ ok( is_chunked( $GELF_MSG_MAGIC ), 'magic' );
 throws_ok{
    enchunk();
 }
-qr/0 parameters were passed to Log::GELF::Util::enchunk but 2 were expected/,
+qr/0 parameters were passed to Log::GELF::Util::enchunk but 3 were expected/,
 'mandatory parameters missing';
 
 throws_ok{
@@ -128,7 +129,7 @@ lives_ok{
 }
 'enchunks compressed gzip ok';
 
-foreach my $i (1 ..10) {
+foreach my $i (1 .. 10) {
 
     $msg = decode_json(test_dechunk(shuffle @chunks));
     is($msg->{version}, '1.1',  "correct default version $i");
@@ -154,7 +155,32 @@ lives_ok{
 
 $msg = decode_json(test_dechunk(@chunks));
 is($msg->{version}, '1.1',  'correct default version');
-is($msg->{host},    'host', 'correct default version');
+is($msg->{host},    'host', 'correct host');
 
-done_testing(44);
+throws_ok{
+    enchunk('0123456789', 2, '1234');
+}
+qr/message id must be 8 bytes/,
+'message id bad size';
+
+my @message_id = ( 1498382863, 3314914434 );
+my $message_id = pack('L*', @message_id );
+lives_ok{
+    @chunks = enchunk('0123456789', 2, $message_id );
+}
+'enchunks with message id';
+
+my %ids;
+foreach my $chunk (@chunks) {
+    my $decoded_chunk = decode_chunk($chunk);
+    $ids{$decoded_chunk->{id}} = 1;
+}
+
+is(scalar keys %ids, 1, 'one id across chunks');
+
+$msg = decode_chunk(shift @chunks);
+is($msg->{id}, $message_id,  'correct packed message id');
+is((join '', unpack('LL', $msg->{id})), (join '', @message_id), 'correct message id');
+
+done_testing(49);
 
