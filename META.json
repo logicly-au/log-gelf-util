@@ -71,9 +71,10 @@
          "web" : "https://github.com/strategicdata/log-gelf-util"
       }
    },
-   "version" : "0.95",
+   "version" : "0.96",
    "x_contributors" : [
-      "Adam Clarke <adam.clarke@strategicdata.com.au>"
+      "Adam Clarke <adam.clarke@strategicdata.com.au>",
+      "Adam Clarke <adam@clarke.id.au>"
    ],
    "x_serialization_backend" : "JSON::PP version 2.27300"
 }
