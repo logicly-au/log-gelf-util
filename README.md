@@ -115,7 +115,7 @@ through unaltered.
 
 Returns an uncompressed string.
 
-## enchunk( $ \[, $\] )
+## enchunk( $ \[, $, $\] )
 
 Accepts an encoded message (JSON string) and chunks it according to the
 GELF chunking protocol.
@@ -124,6 +124,10 @@ The optional second parameter is the maximum size of the chunks to produce,
 this must be a positive integer or the special strings `lan` or `wan`,
 see ["parse\_size"](#parse_size). Defaults to `wan`. A zero chunk size means no chunking
 will be applied.
+
+The optional third parameter is the message id used to identify associated
+chunks. This must be 8 bytes. It defauts to 8 bytes of randomness generated
+by [Math::Random::MT](https://metacpan.org/pod/Math::Random::MT).
 
 If the message size is greater than the maximum size then an array of
 chunks is retuned, otherwise the message is retuned unaltered as the first
@@ -236,4 +240,4 @@ under the same terms as Perl itself.
 
 # AUTHOR
 
-Adam Clarke <adamc@strategicdata.com.au>
+Adam Clarke &lt;adamc@strategicdata.com.au>
