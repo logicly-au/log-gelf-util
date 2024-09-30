@@ -58,7 +58,7 @@ throws_ok{
         'bad name'     => 'to the bone.',
     );
 }
-qr/invalid field 'bad name'.*/,
+qr/invalid field name 'bad name'.*/,
 'bad field check 2';
 
 allow_warnings 1; #throws legit warnings
