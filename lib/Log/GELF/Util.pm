@@ -164,7 +164,7 @@ sub validate_message {
 
     foreach my $key ( keys %p ) {
 
-        if ( ! $key =~ /^[\w\.\-]+$/ ) {
+        if ( ! ($key =~ /^[\w\.\-]+$/) ) {
             die "invalid field name '$key'";
         }
 
