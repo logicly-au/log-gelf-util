@@ -29,3 +29,10 @@ cover_db/
 MYMETA.*
 
 /Log-GELF-Util-*
+
+# Docker build in /root TODO fix
+.ssh/
+.wget-hsts
+.cpanm/
+.pause
+.gitconfig
