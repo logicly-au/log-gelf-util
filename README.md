@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/strategicdata/log-gelf-util.svg?branch=master)](https://travis-ci.org/strategicdata/log-gelf-util)
+[![Build Status](https://travis-ci.org/logicly-au/log-gelf-util.svg?branch=main)](https://travis-ci.org/logicly-au/log-gelf-util)
 # NAME
 
 Log::GELF::Util - Utility functions for Graylog's GELF format.

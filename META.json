@@ -62,21 +62,21 @@
    "release_status" : "unstable",
    "resources" : {
       "bugtracker" : {
-         "web" : "https://github.com/strategicdata/log-gelf-util/issues"
+         "web" : "https://github.com/logicly-au/log-gelf-util/issues"
       },
-      "homepage" : "https://github.com/strategicdata/log-gelf-util",
+      "homepage" : "https://github.com/logicly-au/log-gelf-util",
       "repository" : {
          "type" : "git",
-         "url" : "https://github.com/strategicdata/log-gelf-util.git",
-         "web" : "https://github.com/strategicdata/log-gelf-util"
+         "url" : "https://github.com/logicly-au/log-gelf-util.git",
+         "web" : "https://github.com/logicly-au/log-gelf-util"
       }
    },
-   "version" : "1.00",
+   "version" : "1.01",
    "x_contributors" : [
       "Adam Clarke <adam.clarke@strategicdata.com.au>",
       "Adam Clarke <adam@clarke.id.au>",
       "Adam Clarke <adamc@logicly.com.au>"
    ],
-   "x_serialization_backend" : "JSON::PP version 4.16",
+   "x_serialization_backend" : "JSON::PP version 4.06",
    "x_static_install" : 1
 }
