@@ -1,7 +1,7 @@
 {
    "abstract" : "Utility functions for Graylog's GELF format.",
    "author" : [
-      "Adam Clarke <adamc@strategicdata.com.au>"
+      "Adam Clarke <adamc@logicly.com.au>"
    ],
    "dynamic_config" : 0,
    "generated_by" : "Minilla/v3.1.25, CPAN::Meta::Converter version 2.150010",
@@ -72,11 +72,6 @@
       }
    },
    "version" : "1.01",
-   "x_contributors" : [
-      "Adam Clarke <adam.clarke@strategicdata.com.au>",
-      "Adam Clarke <adam@clarke.id.au>",
-      "Adam Clarke <adamc@logicly.com.au>"
-   ],
    "x_serialization_backend" : "JSON::PP version 4.06",
    "x_static_install" : 1
 }

@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/logicly-au/log-gelf-util.svg?branch=main)](https://travis-ci.org/logicly-au/log-gelf-util)
+[![Actions Status](https://github.com/logicly-au/log-gelf-util/actions/workflows/test.yml/badge.svg)](https://github.com/logicly-au/log-gelf-util/actions) [![MetaCPAN Release](https://badge.fury.io/pl/Log-GELF-Util.svg)](https://metacpan.org/release/Log-GELF-Util)
 # NAME
 
 Log::GELF::Util - Utility functions for Graylog's GELF format.
@@ -233,11 +233,11 @@ fields are associated with a false value.
 
 # LICENSE
 
-Copyright (C) Strategic Data.
+Copyright (C) Logicly.
 
 This library is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
 
 # AUTHOR
 
-Adam Clarke <adamc@strategicdata.com.au>
+Adam Clarke <adamc@logicly.com.au>

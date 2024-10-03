@@ -686,13 +686,13 @@ fields are associated with a false value.
 
 =head1 LICENSE
 
-Copyright (C) Strategic Data.
+Copyright (C) Logicly.
 
 This library is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
 
 =head1 AUTHOR
 
-Adam Clarke E<lt>adamc@strategicdata.com.auE<gt>
+Adam Clarke E<lt>adamc@logicly.com.auE<gt>
 
 =cut

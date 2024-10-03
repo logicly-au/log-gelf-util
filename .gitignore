@@ -30,9 +30,6 @@ MYMETA.*
 
 /Log-GELF-Util-*
 
-# Docker build in /root TODO fix
-.ssh/
-.wget-hsts
-.cpanm/
-.pause
-.gitconfig
+/.build
+!Build/
+!META.json
